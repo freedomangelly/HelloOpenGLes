@@ -72,7 +72,7 @@ public class ColorRender implements GLSurfaceView.Renderer {
      * 着色器uniform位置
      */
     private int uColorLocation;
-    private int aColorLocation;
+
     /**
      * 顶点器uniform位置
      */
@@ -115,11 +115,11 @@ public class ColorRender implements GLSurfaceView.Renderer {
     float[] tableVerticesWithTriangles3={
 
             0f,0f,1f,1f,1f,
-            -0.5f,-0.5f,0.7f,0.7f,0.7f,
-            0.5f,-0.5f,0.7f,0.7f,0.7f,
-            0.5f,0.5f,0.7f,0.7f,0.7f,
-            -0.5f,0.5f,0.7f,0.7f,0.7f,
-            -0.5f,-0.5f,0.7f,0.7f,0.7f
+            -0.5f,-0.5f,0.0f,0.7f,0.0f,
+            0.5f,-0.5f,0.7f,0.7f,0.0f,
+            0.5f,0.5f,0.0f,0.7f,0.7f,
+            -0.5f,0.5f,0.7f,0.0f,0.7f,
+            -0.5f,-0.5f,0.7f,0.7f,0.0f,
 
             -0.5f,0f,1f,0f,0f,
             0.5f,0f,1f,0f,0f,
@@ -132,7 +132,8 @@ public class ColorRender implements GLSurfaceView.Renderer {
     private static final String A_COLOR="a_Color";
     private static final int COLOR_COMPONENT_COUNT=3;
     private static final int BYTES_PER_FLOAT = 4;
-    private static final int STRIDE=(POSITION_COMPONENT_COUNT+COLOR_COMPONENT_COUNT)*BYTES_PER_FLOAT;
+    private static final int STRIDE=(POSITION_COMPONENT_COUNT+COLOR_COMPONENT_COUNT) * BYTES_PER_FLOAT;
+    private int aColorLocation;
 
     /**
      * 构造函数
@@ -147,10 +148,10 @@ public class ColorRender implements GLSurfaceView.Renderer {
         Log.i(TAG,"fragmentShaderSource="+fragmentShaderSource);
 
         color= Color.WHITE;
-        vertexBuffer=ByteBuffer.allocateDirect(tableVerticesWithTriangles2.length*4)//分配和每个点占用4个字节这块内存不会被GC回收
+        vertexBuffer=ByteBuffer.allocateDirect(tableVerticesWithTriangles3.length * BYTES_PER_FLOAT)//分配和每个点占用4个字节这块内存不会被GC回收
                 .order(ByteOrder.nativeOrder())//告诉字节缓冲区，按照贝蒂字节序（navive byte order）组织他的内容；
                 .asFloatBuffer();//得到一个可以返回反应底层字节的FloatBuffer类实例
-        vertexBuffer.put(tableVerticesWithTriangles2);
+        vertexBuffer.put(tableVerticesWithTriangles3);
         vertexBuffer.position(0);//将点位放回大第一位，否则openGLES读取的时候会从后面读取
     }
 
@@ -172,8 +173,8 @@ public class ColorRender implements GLSurfaceView.Renderer {
         ShaderHelper.validateProgram(program);
         glUseProgram(program);
         //获取uniform位置
-        uColorLocation=glGetUniformLocation(program,U_COLOR);
-//        aColorLocation=glGetUniformLocation(program,A_COLOR);
+//        uColorLocation=glGetUniformLocation(program,U_COLOR);
+        aColorLocation=glGetAttribLocation(program,A_COLOR);
         aPositionLocation=glGetAttribLocation(program,A_Position);
         Log.i(TAG,"uColorLocation="+uColorLocation);
         Log.i(TAG,"aPositionLocation="+aPositionLocation);
@@ -187,14 +188,14 @@ public class ColorRender implements GLSurfaceView.Renderer {
          java.nio.Buffer ptr  告诉OpenGL去哪里读取数据。不要忘了他会动缓冲区的当前位置读取，如果没有掉用vertexBuffer.position(0)，它可能尝试读取缓冲区结尾后面的内容
          *
          */
-        glVertexAttribPointer(aPositionLocation,POSITION_COMPONENT_COUNT,GL_FLOAT,false,0,vertexBuffer);
-//        glVertexAttribPointer(aPositionLocation,POSITION_COMPONENT_COUNT,GL_FLOAT,false,STRIDE,vertexBuffer);
+//        glVertexAttribPointer(aPositionLocation,POSITION_COMPONENT_COUNT,GL_FLOAT,false,0,vertexBuffer);
+        glVertexAttribPointer(aPositionLocation,POSITION_COMPONENT_COUNT,GL_FLOAT,false,STRIDE,vertexBuffer);
         //最后一步，激活以上的操作
         glEnableVertexAttribArray(aPositionLocation);
 
-//        vertexBuffer.position(POSITION_COMPONENT_COUNT);
-//        glVertexAttribPointer(aColorLocation,COLOR_COMPONENT_COUNT,GL_FLOAT,false,STRIDE,vertexBuffer);
-//        glEnableVertexAttribArray(aColorLocation);
+        vertexBuffer.position(POSITION_COMPONENT_COUNT);
+        glVertexAttribPointer(aColorLocation,COLOR_COMPONENT_COUNT,GL_FLOAT,false,STRIDE,vertexBuffer);
+        glEnableVertexAttribArray(aColorLocation);
 
     }
 
@@ -207,22 +208,22 @@ public class ColorRender implements GLSurfaceView.Renderer {
     public void onDrawFrame(GL10 gl) {//绘制第一帧的是时候被调用
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);//表示清空屏幕，这会擦除屏幕上的所有演示，用之前glClearColor定义的颜色填充整个屏幕
         //开始绘制图形
-        glUniform4f(uColorLocation,1f,1f,1f,1f);//更新代码中的u_Color值，与属性不同，uniform的分量没有默认值，一次，如果一个uniform在着色器中被定义为vec4类型，我们需要提供所有四个风向的值
+//        glUniform4f(uColorLocation,1f,1f,1f,1f);//更新代码中的u_Color值，与属性不同，uniform的分量没有默认值，一次，如果一个uniform在着色器中被定义为vec4类型，我们需要提供所有四个风向的值
         //第一个参数告诉Opengl 要化三角形
         //第二个参数告诉opengl从顶点数组的开头处开始读顶点；
         //第三个参数是告诉OpenGL读入六个顶点。因为每个三角形有三个顶点，这个嗲用最终绘画出两个三角形
 //        glDrawArrays(GL_TRIANGLES,0,6);
         glDrawArrays(GL_TRIANGLE_FAN,0,6);
         //绘制分割线
-        glUniform4f(uColorLocation,1f,0f,0f,1f);
+//        glUniform4f(uColorLocation,1f,0f,0f,1f);
         glDrawArrays(GL_LINES,6,2);
         //绘制木槌
 //        glUniform4f(uColorLocation,1f,1f,0f,1f);
 //        glDrawArrays(GL_QUADS,8,4);
 
-        glUniform4f(uColorLocation,0f,0f,1f,1f);
+//        glUniform4f(uColorLocation,0f,0f,1f,1f);
         glDrawArrays(GL_POINTS,8,1);
-        glUniform4f(uColorLocation,1f,0f,0f,1f);
+//        glUniform4f(uColorLocation,1f,0f,0f,1f);
         glDrawArrays(GL_POINTS,9,1);
         //绘制边界
 //        glUniform4f(uColorLocation,0f,0f,1f,1f);
