@@ -7,6 +7,7 @@ import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.util.Log;
 
+import com.liuy.helloopengles.util.MatrixHelper;
 import com.liuy.helloopengles.util.ShaderHelper;
 import com.liuy.helloopengles.util.TextResourceReader;
 
@@ -41,7 +42,7 @@ import static android.opengl.GLES32.GL_QUADS;
  */
 public class ColorRender implements GLSurfaceView.Renderer {
     //记录顶点的变量，一个点有两个变量，x,y
-    private static final int POSITION_COMPONENT_COUNT = 2;
+    private static final int POSITION_COMPONENT_COUNT = 4;
     private String TAG = "ColorRender";
     private int color;
 
@@ -146,6 +147,22 @@ public class ColorRender implements GLSurfaceView.Renderer {
             0f,0.25f,1f,0f,0f
 
     };
+    float[] tableVerticesWithTriangles5={
+
+            0f,0f,0f,1.5f,1f,1f,1f,
+            -0.5f,-0.8f,0f,1f,0.7f,0.7f,0.0f,
+            0.5f,-0.8f,0f,1f,0.7f,0.7f,0.0f,
+            0.5f,0.8f,0f,2f,0.0f,0.7f,0.7f,
+            -0.5f,0.8f,0f,2f,0.7f,0.0f,0.7f,
+            -0.5f,-0.8f,0f,1f,0.7f,0.7f,0.0f,
+
+            -0.5f,0f,0f,1.5f,1f,0f,0f,
+            0.5f,0f,0f,1.5f,1f,0f,0f,
+
+            0f,-0.4f,0f,1.25f,0f,0f,1f,
+            0f,0.4f,0f,1.75f,1f,0f,0f
+
+    };
 
     private static final String A_COLOR="a_Color";
     private static final int COLOR_COMPONENT_COUNT=3;
@@ -156,6 +173,9 @@ public class ColorRender implements GLSurfaceView.Renderer {
     private static final String U_MATRIX="u_Matrix";
     private float[] projectionMatrix=new float[16];
     private int uMatrixLocation;
+
+
+    private final float[] modelMatrix=new float[16];
 
 
     /**
@@ -171,10 +191,10 @@ public class ColorRender implements GLSurfaceView.Renderer {
         Log.i(TAG,"fragmentShaderSource="+fragmentShaderSource);
 
         color= Color.WHITE;
-        vertexBuffer=ByteBuffer.allocateDirect(tableVerticesWithTriangles4.length * BYTES_PER_FLOAT)//分配和每个点占用4个字节这块内存不会被GC回收
+        vertexBuffer=ByteBuffer.allocateDirect(tableVerticesWithTriangles5.length * BYTES_PER_FLOAT)//分配和每个点占用4个字节这块内存不会被GC回收
                 .order(ByteOrder.nativeOrder())//告诉字节缓冲区，按照贝蒂字节序（navive byte order）组织他的内容；
                 .asFloatBuffer();//得到一个可以返回反应底层字节的FloatBuffer类实例
-        vertexBuffer.put(tableVerticesWithTriangles4);
+        vertexBuffer.put(tableVerticesWithTriangles5);
         vertexBuffer.position(0);//将点位放回大第一位，否则openGLES读取的时候会从后面读取
     }
 
@@ -222,30 +242,48 @@ public class ColorRender implements GLSurfaceView.Renderer {
 
         uMatrixLocation=glGetUniformLocation(program,U_MATRIX);
 
+
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {//大小改变的时候被调用
         GLES30.glViewport(0,0,width,height);//设置窗口尺寸
-        //添加如下代码
-        float aspectRatio=width>height?(float)width/(float)height:(float)height/(float)width;
-        /**
-         *         float[] m, 目标数组，这个数组的长度至少有16个元素，这样它才能存储正交投影矩阵
-         *         int mOffset, 结果矩阵其实的偏移值
-         *         float left, x轴最小范围
-         *         float right,x轴最大范围
-         *         float bottom, y轴最小范围
-         *         float top, y轴最大范围
-         *         float near, z轴最小范围
-         *         float far z轴最大范围
-         */
 
-        if(width>height){
-            Matrix.orthoM(projectionMatrix,0,-aspectRatio,aspectRatio,-1f,1f,-1f,1f);
-        }else {
-            Matrix.orthoM(projectionMatrix,0,-1f,1f,-aspectRatio,aspectRatio,-1f,1f);
+        Matrix.setIdentityM(modelMatrix,0);//设置为单位矩阵
+//        Matrix.translateM(modelMatrix,0,0f,0f,-2f);//像Z轴平移2个
+        //用45度角的视野创建一个投影模式，这个是椎体从z值为-1的位置开始，在z值为-10的位置结束
+        MatrixHelper.perspectiveM(projectionMatrix,45,(float) width/(float) height,1f,10f,false);
+        //直接设置完这句后会导致界面变黑，所以添加下面的变量
+//        //创建变量存储临时结果
+        float[] temp=new float[16];
 
-        }
+        Matrix.translateM(modelMatrix,0,0f,0f,-2.5f);
+        Matrix.rotateM(modelMatrix,0,-60f,1f,0f,0f);
+        //把投影矩阵和模型矩阵相乘
+        Matrix.multiplyMM(temp,0,projectionMatrix,0,modelMatrix,0);
+        //把结果copy到projectionMatrix
+        System.arraycopy(temp,0,projectionMatrix,0,temp.length);
+
+
+//        //添加如下代码
+//        float aspectRatio=width>height?(float)width/(float)height:(float)height/(float)width;
+//        /**
+//         *         float[] m, 目标数组，这个数组的长度至少有16个元素，这样它才能存储正交投影矩阵
+//         *         int mOffset, 结果矩阵其实的偏移值
+//         *         float left, x轴最小范围
+//         *         float right,x轴最大范围
+//         *         float bottom, y轴最小范围
+//         *         float top, y轴最大范围
+//         *         float near, z轴最小范围
+//         *         float far z轴最大范围
+//         */
+//
+//        if(width>height){
+//            Matrix.orthoM(projectionMatrix,0,-aspectRatio,aspectRatio,-1f,1f,-1f,1f);
+//        }else {
+//            Matrix.orthoM(projectionMatrix,0,-1f,1f,-aspectRatio,aspectRatio,-1f,1f);
+//
+//        }
     }
 
     @Override
