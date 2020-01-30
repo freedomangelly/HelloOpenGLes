@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
+import android.opengl.Matrix;
 import android.util.Log;
 
 import com.liuy.helloopengles.util.ShaderHelper;
@@ -27,6 +28,7 @@ import static android.opengl.GLES20.glEnableVertexAttribArray;
 import static android.opengl.GLES20.glGetAttribLocation;
 import static android.opengl.GLES20.glGetUniformLocation;
 import static android.opengl.GLES20.glUniform4f;
+import static android.opengl.GLES20.glUniformMatrix4fv;
 import static android.opengl.GLES20.glUseProgram;
 import static android.opengl.GLES20.glVertexAttribPointer;
 import static android.opengl.GLES32.GL_QUADS;
@@ -128,12 +130,33 @@ public class ColorRender implements GLSurfaceView.Renderer {
             0f,0.25f,1f,0f,0f
 
     };
+    float[] tableVerticesWithTriangles4={
+
+            0f,0f,1f,1f,1f,
+            -0.5f,-0.8f,0.0f,0.7f,0.0f,
+            0.5f,-0.8f,0.7f,0.7f,0.0f,
+            0.5f,0.8f,0.0f,0.7f,0.7f,
+            -0.5f,0.8f,0.7f,0.0f,0.7f,
+            -0.5f,-0.8f,0.7f,0.7f,0.0f,
+
+            -0.5f,0f,1f,0f,0f,
+            0.5f,0f,1f,0f,0f,
+
+            0f,-0.25f,0f,0f,1f,
+            0f,0.25f,1f,0f,0f
+
+    };
 
     private static final String A_COLOR="a_Color";
     private static final int COLOR_COMPONENT_COUNT=3;
     private static final int BYTES_PER_FLOAT = 4;
     private static final int STRIDE=(POSITION_COMPONENT_COUNT+COLOR_COMPONENT_COUNT) * BYTES_PER_FLOAT;
     private int aColorLocation;
+
+    private static final String U_MATRIX="u_Matrix";
+    private float[] projectionMatrix=new float[16];
+    private int uMatrixLocation;
+
 
     /**
      * 构造函数
@@ -148,10 +171,10 @@ public class ColorRender implements GLSurfaceView.Renderer {
         Log.i(TAG,"fragmentShaderSource="+fragmentShaderSource);
 
         color= Color.WHITE;
-        vertexBuffer=ByteBuffer.allocateDirect(tableVerticesWithTriangles3.length * BYTES_PER_FLOAT)//分配和每个点占用4个字节这块内存不会被GC回收
+        vertexBuffer=ByteBuffer.allocateDirect(tableVerticesWithTriangles4.length * BYTES_PER_FLOAT)//分配和每个点占用4个字节这块内存不会被GC回收
                 .order(ByteOrder.nativeOrder())//告诉字节缓冲区，按照贝蒂字节序（navive byte order）组织他的内容；
                 .asFloatBuffer();//得到一个可以返回反应底层字节的FloatBuffer类实例
-        vertexBuffer.put(tableVerticesWithTriangles3);
+        vertexBuffer.put(tableVerticesWithTriangles4);
         vertexBuffer.position(0);//将点位放回大第一位，否则openGLES读取的时候会从后面读取
     }
 
@@ -197,46 +220,48 @@ public class ColorRender implements GLSurfaceView.Renderer {
         glVertexAttribPointer(aColorLocation,COLOR_COMPONENT_COUNT,GL_FLOAT,false,STRIDE,vertexBuffer);
         glEnableVertexAttribArray(aColorLocation);
 
+        uMatrixLocation=glGetUniformLocation(program,U_MATRIX);
+
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {//大小改变的时候被调用
         GLES30.glViewport(0,0,width,height);//设置窗口尺寸
+        //添加如下代码
+        float aspectRatio=width>height?(float)width/(float)height:(float)height/(float)width;
+        /**
+         *         float[] m, 目标数组，这个数组的长度至少有16个元素，这样它才能存储正交投影矩阵
+         *         int mOffset, 结果矩阵其实的偏移值
+         *         float left, x轴最小范围
+         *         float right,x轴最大范围
+         *         float bottom, y轴最小范围
+         *         float top, y轴最大范围
+         *         float near, z轴最小范围
+         *         float far z轴最大范围
+         */
+
+        if(width>height){
+            Matrix.orthoM(projectionMatrix,0,-aspectRatio,aspectRatio,-1f,1f,-1f,1f);
+        }else {
+            Matrix.orthoM(projectionMatrix,0,-1f,1f,-aspectRatio,aspectRatio,-1f,1f);
+
+        }
     }
 
     @Override
     public void onDrawFrame(GL10 gl) {//绘制第一帧的是时候被调用
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);//表示清空屏幕，这会擦除屏幕上的所有演示，用之前glClearColor定义的颜色填充整个屏幕
-        //开始绘制图形
-//        glUniform4f(uColorLocation,1f,1f,1f,1f);//更新代码中的u_Color值，与属性不同，uniform的分量没有默认值，一次，如果一个uniform在着色器中被定义为vec4类型，我们需要提供所有四个风向的值
-        //第一个参数告诉Opengl 要化三角形
-        //第二个参数告诉opengl从顶点数组的开头处开始读顶点；
-        //第三个参数是告诉OpenGL读入六个顶点。因为每个三角形有三个顶点，这个嗲用最终绘画出两个三角形
-//        glDrawArrays(GL_TRIANGLES,0,6);
+        glUniformMatrix4fv(uMatrixLocation,1,false,projectionMatrix,0);
         glDrawArrays(GL_TRIANGLE_FAN,0,6);
         //绘制分割线
 //        glUniform4f(uColorLocation,1f,0f,0f,1f);
         glDrawArrays(GL_LINES,6,2);
         //绘制木槌
-//        glUniform4f(uColorLocation,1f,1f,0f,1f);
-//        glDrawArrays(GL_QUADS,8,4);
 
-//        glUniform4f(uColorLocation,0f,0f,1f,1f);
         glDrawArrays(GL_POINTS,8,1);
-//        glUniform4f(uColorLocation,1f,0f,0f,1f);
         glDrawArrays(GL_POINTS,9,1);
-        //绘制边界
-//        glUniform4f(uColorLocation,0f,0f,1f,1f);
-//        glDrawArrays(GL_LINES,10,2);
-////        glUniform4f(uColorLocation,0f,0f,1f,1f);
-//        glDrawArrays(GL_LINES,11,2);
-////        glUniform4f(uColorLocation,0f,0f,1f,1f);
-//        glDrawArrays(GL_LINES,12,2);
-////        glUniform4f(uColorLocation,0f,0f,1f,1f);
-//        glDrawArrays(GL_LINES,13,2);
-//        //绘制中心点
-////        glUniform4f(uColorLocation,0f,1f,0f,1f);
-//        glDrawArrays(GL_POINTS,15,2);
+
+
     }
 
 }
