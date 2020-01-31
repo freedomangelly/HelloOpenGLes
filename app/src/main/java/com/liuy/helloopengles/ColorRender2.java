@@ -51,7 +51,7 @@ public class ColorRender2 implements GLSurfaceView.Renderer {
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {//创建的时候被调用，但是也可能显示多次
         glClearColor(0f,0f,0f,0f);
         table=new Table();
-        mallet=new Mallet();
+        mallet=new Mallet(0f,0f,0);
         textureShaderProgram=new TextureShaderProgram(mContext);
         colorShaderProgram=new ColorShaderProgram(mContext);
 
@@ -111,7 +111,7 @@ public class ColorRender2 implements GLSurfaceView.Renderer {
         table.draw();
 
         colorShaderProgram.useProgram();
-        colorShaderProgram.setUniforms(projectionMatrix);
+//        colorShaderProgram.setUniforms(projectionMatrix);
         mallet.bindData(colorShaderProgram);
         mallet.draw();
 

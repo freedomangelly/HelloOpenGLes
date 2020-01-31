@@ -28,9 +28,11 @@ public class TextureShaderProgram extends ShaderProgram{
     private int aTextureCoordinatesLocation;
 
     public TextureShaderProgram(Context context) {
-        super(context, R.raw.texture_vertex_shader,R.raw.texture_fragment_shader);
+        super(context, R.raw.texture_vertex_shader,
+		R.raw.texture_fragment_shader);
         uMatrixLocation=glGetUniformLocation(program,U_MATRIX);
-        uTextureUnitLocation=glGetUniformLocation(program,U_TEXTURE_UNIT);
+        uTextureUnitLocation=glGetUniformLocation(program,
+		U_TEXTURE_UNIT);
 
         aPositionLocation=glGetAttribLocation(program,A_POSITION);
         aTextureCoordinatesLocation=glGetAttribLocation(program,A_TEXTURE_COORDINATES);

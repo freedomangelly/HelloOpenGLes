@@ -11,6 +11,7 @@ import static android.opengl.GLES20.glAttachShader;
 import static android.opengl.GLES20.glCompileShader;
 import static android.opengl.GLES20.glCreateProgram;
 import static android.opengl.GLES20.glCreateShader;
+import static android.opengl.GLES20.glDeleteProgram;
 import static android.opengl.GLES20.glDeleteShader;
 import static android.opengl.GLES20.glGetError;
 import static android.opengl.GLES20.glGetProgramInfoLog;
@@ -48,7 +49,8 @@ public class ShaderHelper {
         glShaderSource(shaderObjectId,shaderCode);//上传源代码，告诉openGL读入字符串，并把它与shaderObjectId所引用的着色器关联起来
         glCompileShader(shaderObjectId);//编译这个着色器
         int[] compileStatus=new int[1];//为了检查是否成功，创建长度为1的数组
-        glGetShaderiv(shaderObjectId,GL_COMPILE_STATUS,compileStatus,0);//告诉openGL,把结果存进数组的第一个元素中//验证是否成功
+        glGetShaderiv(shaderObjectId,GL_COMPILE_STATUS,
+		compileStatus,0);//告诉openGL,把结果存进数组的第一个元素中//验证是否成功
         Log.i(TAG,"results of comiling source:\n"+shaderCode+"\n"+glGetShaderInfoLog(shaderObjectId));
         if(compileStatus[0]==0){//上色失败了
             glDeleteShader(shaderObjectId);
@@ -73,7 +75,7 @@ public class ShaderHelper {
         glGetProgramiv(programObjectId,GL_LINK_STATUS,linkStatus,0);//验证连接状态
         Log.i(TAG,"Results of linking program:\n"+glGetProgramInfoLog(programObjectId));
         if(linkStatus[0]==0){//连接失败
-            glDeleteShader(programObjectId);
+            glDeleteProgram(programObjectId);
             Log.i(TAG,"linking of shader failed.");
             return 0;
         }

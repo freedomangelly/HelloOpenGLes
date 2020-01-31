@@ -20,12 +20,17 @@ public class ShaderProgram {
     static String A_POSITION="a_Position";
     static String A_COLOR="a_Color";
     static String A_TEXTURE_COORDINATES="a_TextureCoordinates";
+    static String U_COLOR="u_Color";
 
     int program;
 
-    public ShaderProgram(Context context,int vertexShaderResourceId,int fragmentShaderResourceId) {
-        program= ShaderHelper.buildProgram(TextResourceReader.readTextFileFromResource(context,vertexShaderResourceId)
-                ,TextResourceReader.readTextFileFromResource(context,fragmentShaderResourceId));
+    public ShaderProgram(Context context,int vertexShaderResourceId,
+	int fragmentShaderResourceId) {
+        program= ShaderHelper.buildProgram(
+		TextResourceReader
+		.readTextFileFromResource(context,vertexShaderResourceId),
+		TextResourceReader
+		.readTextFileFromResource(context,fragmentShaderResourceId));
     }
 
     public void useProgram(){

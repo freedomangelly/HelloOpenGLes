@@ -54,14 +54,19 @@ public class TextureHelper {
         //纹理的过滤
         //当纹理被缩小或者扩大的时候，我们需要通过纹理过滤来说明会发生什么。
         //设置默认的纹理过滤参数
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+        glTexParameteri(GL_TEXTURE_2D,
+		GL_TEXTURE_MIN_FILTER,
+		GL_LINEAR_MIPMAP_LINEAR);
+		        glTexParameteri(GL_TEXTURE_2D,
+		GL_TEXTURE_MAG_FILTER,GL_LINEAR);
         //加载位图数据到opengl
         texImage2D(GL_TEXTURE_2D,0,bitmap,0);
-        bitmap.recycle();//是否数据
+        
         //生成所需必要的级别
         glGenerateMipmap(GL_TEXTURE_2D);
         //绑定这个纹理
+		bitmap.recycle();//是否数据
         glBindTexture(GL_TEXTURE_2D,0);
         return textureObjectIds[0];
     }

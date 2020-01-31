@@ -9,6 +9,8 @@ import android.content.pm.ConfigurationInfo;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
@@ -35,8 +37,36 @@ public class MainActivity extends AppCompatActivity {
         mGLSurfaceView =new GLSurfaceView(this);
         setContentView(mGLSurfaceView);
         mGLSurfaceView.setEGLContextClientVersion(2);//设置opengl的版本
-        GLSurfaceView.Renderer renderer=new AirHockeyRenderer(this);
+        final ColorRender3 renderer=new ColorRender3(this);
         mGLSurfaceView.setRenderer(renderer);
+        mGLSurfaceView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if(event!=null){
+                    final float normalizedX=event.getX()/(float) v.getWidth()*2-1;
+                    final float normalizedY=
+					-(event.getY()/(float) v.getHeight()*2-1);
+
+                    if(event.getAction()==MotionEvent.ACTION_DOWN){
+                        mGLSurfaceView.queueEvent(new Runnable() {
+                            @Override
+                            public void run() {
+                                renderer.handleTouchPress(normalizedX,normalizedY);
+                            }
+                        });
+                    }else if(event.getAction()==MotionEvent.ACTION_MOVE){
+                        mGLSurfaceView.queueEvent(new Runnable() {
+                            @Override
+                            public void run() {
+                                renderer.handleTouchDrag(normalizedX,normalizedY);
+                            }
+                        });
+                    }
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 
     //设备是否支持opengl es 2.0
