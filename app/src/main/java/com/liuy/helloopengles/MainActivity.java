@@ -34,8 +34,8 @@ public class MainActivity extends AppCompatActivity {
     private void setupView() {
         mGLSurfaceView =new GLSurfaceView(this);
         setContentView(mGLSurfaceView);
-        mGLSurfaceView.setEGLContextClientVersion(3);//设置opengl的版本
-        GLSurfaceView.Renderer renderer=new ColorRender(this);
+        mGLSurfaceView.setEGLContextClientVersion(2);//设置opengl的版本
+        GLSurfaceView.Renderer renderer=new AirHockeyRenderer(this);
         mGLSurfaceView.setRenderer(renderer);
     }
 
