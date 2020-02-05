@@ -8,6 +8,13 @@ import android.util.Log;
 import static android.opengl.GLES20.GL_LINEAR;
 import static android.opengl.GLES20.GL_LINEAR_MIPMAP_LINEAR;
 import static android.opengl.GLES20.GL_TEXTURE_2D;
+import static android.opengl.GLES20.GL_TEXTURE_CUBE_MAP;
+import static android.opengl.GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_X;
+import static android.opengl.GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y;
+import static android.opengl.GLES20.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z;
+import static android.opengl.GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+import static android.opengl.GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Y;
+import static android.opengl.GLES20.GL_TEXTURE_CUBE_MAP_POSITIVE_Z;
 import static android.opengl.GLES20.GL_TEXTURE_MAG_FILTER;
 import static android.opengl.GLES20.GL_TEXTURE_MIN_FILTER;
 import static android.opengl.GLES20.glBindTexture;
@@ -71,55 +78,52 @@ public class TextureHelper {
         glBindTexture(GL_TEXTURE_2D,0);
         return textureObjectIds[0];
     }
-//    public static int loadTexture(Context context, int resourceId) {
-//        final int[] textureObjectIds = new int[1];
-//        glGenTextures(1, textureObjectIds, 0);
-//
-//        if (textureObjectIds[0] == 0) {
-//                Log.w(TAG, "Could not generate a new OpenGL texture object.");
-//            return 0;
-//        }
-//
-//        final BitmapFactory.Options options = new BitmapFactory.Options();
-//        options.inScaled = false;
-//
-//        // Read in the resource
-//        final Bitmap bitmap = BitmapFactory.decodeResource(
-//                context.getResources(), resourceId, options);
-//
-//        if (bitmap == null) {
-//                Log.w(TAG, "Resource ID " + resourceId + " could not be decoded.");
-//
-//            glDeleteTextures(1, textureObjectIds, 0);
-//            return 0;
-//        }
-//        // Bind to the texture in OpenGL
-//        glBindTexture(GL_TEXTURE_2D, textureObjectIds[0]);
-//
-//        // Set filtering: a default must be set, or the texture will be
-//        // black.
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//        // Load the bitmap into the bound texture.
-//        texImage2D(GL_TEXTURE_2D, 0, bitmap, 0);
-//
-//        // Note: Following code may cause an error to be reported in the
-//        // ADB log as follows: E/IMGSRV(20095): :0: HardwareMipGen:
-//        // Failed to generate texture mipmap levels (error=3)
-//        // No OpenGL error will be encountered (glGetError() will return
-//        // 0). If this happens, just squash the source image to be
-//        // square. It will look the same because of texture coordinates,
-//        // and mipmap generation will work.
-//
-//        glGenerateMipmap(GL_TEXTURE_2D);
-//
-//        // Recycle the bitmap, since its data has been loaded into
-//        // OpenGL.
-//        bitmap.recycle();
-//
-//        // Unbind from the texture.
-//        glBindTexture(GL_TEXTURE_2D, 0);
-//
-//        return textureObjectIds[0];
-//    }
+
+    public static int loadCubeMap(Context context,int[] cubeResources){
+        final int[] textureObjectIds=new int[1];
+        glGenTextures(1,textureObjectIds,0);
+        if(textureObjectIds[0] == 0){
+            Log.i(TAG,"could not generate a new OpenGL texture object.");
+        return 0;
+        }
+        final BitmapFactory.Options options=new BitmapFactory.Options();
+        options.inScaled = false;
+        final Bitmap[] cubeBitmaps=new Bitmap[6];
+        //当调用这个方法的时候，我么你传递进去6个图像资源，其中每一个都对应立方体的一个面。这个顺序有很大影响，因此我们将以一个标砖顺序使用这些图像。
+        //我们把图像加载进位图数组
+        //接下来我们把所有6个图像都解码到内存中，加载过郑重要确保每次加载都成功了。
+        for(int i=0;i<6;i++){
+            cubeBitmaps[i]=BitmapFactory.decodeResource(context.getResources(),cubeResources[i],options);
+            if(cubeBitmaps[i] == null){
+                Log.w(TAG,"Resource ID "+cubeResources[i]+"could not be decoded.");
+                glDeleteTextures(1,textureObjectIds,0);
+                return 0;
+            }
+        }
+        //我们要配置纹理过滤器
+        glBindTexture(GL_TEXTURE_CUBE_MAP,textureObjectIds[0]);
+        //放大缩小均使用双线性过滤，也能节省纹理内存。
+        glTexParameteri(GL_TEXTURE_CUBE_MAP,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+        //把每张图像与其对应的立方体贴图的面关联起来
+        //我们要以左右下上前后的顺序传递立方体的面
+        texImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, cubeBitmaps[0], 0);
+        texImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, cubeBitmaps[1], 0);
+
+        texImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, cubeBitmaps[2], 0);
+        texImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, cubeBitmaps[3], 0);
+
+        texImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, cubeBitmaps[4], 0);
+        texImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, cubeBitmaps[5], 0);
+        //与纹理解除了绑定，
+        glBindTexture(GL_TEXTURE_2D, 0);
+        //回收了所有位图对象，
+        for (Bitmap bitmap : cubeBitmaps) {
+            bitmap.recycle();
+        }
+        //返回纹理对象Id给调用者
+        return textureObjectIds[0];
+    }
+
+
 }

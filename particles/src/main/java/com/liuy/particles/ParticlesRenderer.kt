@@ -35,6 +35,7 @@ class ParticlesRenderer:GLSurfaceView.Renderer{
 
     var texture:Int=0
 
+
     constructor(context:Context){
         this.context=context
     }
@@ -61,6 +62,7 @@ class ParticlesRenderer:GLSurfaceView.Renderer{
         blueParticleShooter= ParticleShooter(Geometry.Point(1f,0f,0f),Color.rgb(5,50,255),particleDirection,angleVarianceInDegrees, speedVariance)
 
         texture=TextureHelper.loadTexture(context,R.drawable.particle_texture)
+
     }
 
 

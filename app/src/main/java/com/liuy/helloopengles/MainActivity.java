@@ -15,6 +15,8 @@ import android.widget.TextView;
 
 import com.liuy.airhockettouch.ColorRender3;
 import com.liuy.particles.ParticlesRenderer;
+import com.liuy.particles.SkyBox;
+import com.liuy.particles.SkyRenderer;
 
 public class MainActivity extends AppCompatActivity {
     private String TAG = "testOpengles";
@@ -40,8 +42,9 @@ public class MainActivity extends AppCompatActivity {
         mGLSurfaceView =new GLSurfaceView(this);
         setContentView(mGLSurfaceView);
         mGLSurfaceView.setEGLContextClientVersion(2);//设置opengl的版本
-        final ParticlesRenderer renderer=new ParticlesRenderer(this);
+        final SkyRenderer renderer=new SkyRenderer(this);
         mGLSurfaceView.setRenderer(renderer);
+        renderer.setGLSurfaceViewTouch(mGLSurfaceView);
 //        mGLSurfaceView.setOnTouchListener(new View.OnTouchListener() {
 //            @Override
 //            public boolean onTouch(View v, MotionEvent event) {

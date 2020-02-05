@@ -23,6 +23,8 @@ class ParticleShaderProgram :ShaderProgram2{
     //纹理
     private var uTextureUnitLocation:Int=0
 
+
+
     constructor(context: Context)
         :super(context,R.raw.particle_vertex_shader,R.raw.particle_fragment_shader){
         uMatrixLocation=glGetUniformLocation(program,U_MATRIX)
