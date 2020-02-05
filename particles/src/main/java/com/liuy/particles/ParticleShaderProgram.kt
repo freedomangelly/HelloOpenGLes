@@ -31,7 +31,7 @@ class ParticleShaderProgram :ShaderProgram2{
         uTimeLocation= glGetUniformLocation(program, U_TIME)
 
         aPositionLocation= glGetAttribLocation(program, A_POSITION)
-        aColorLocation= glGetAttribLocation(program, A_COLOR);
+        aColorLocation= glGetAttribLocation(program, A_COLOR)
         aDirectionVectorLocation= glGetAttribLocation(program, A_DIRECTION_VECTIO)
         aParticleStartTimeLocation= glGetAttribLocation(program, A_PARTICLE_START_TIME)
 

@@ -1,4 +1,4 @@
-package com.liuy.particles
+package com.liuy.particles.skybox
 
 import android.content.Context
 import android.graphics.Color
@@ -15,6 +15,10 @@ import android.opengl.Matrix.setIdentityM
 import android.view.View
 import android.view.MotionEvent
 import android.view.View.OnTouchListener
+import com.liuy.particles.ParticleShaderProgram
+import com.liuy.particles.ParticleShooter
+import com.liuy.particles.ParticleSystem
+import com.liuy.particles.R
 
 
 /**

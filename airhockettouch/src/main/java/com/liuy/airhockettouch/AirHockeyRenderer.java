@@ -9,7 +9,10 @@
 package com.liuy.airhockettouch;
 
 import android.content.Context;
+import android.opengl.GLSurfaceView;
 import android.opengl.GLSurfaceView.Renderer;
+import android.view.MotionEvent;
+import android.view.View;
 
 
 import com.liuy.airhockettouch.objects.Mallet;
@@ -285,5 +288,36 @@ public class AirHockeyRenderer implements Renderer {
         translateM(modelMatrix, 0, x, y, z);
         multiplyMM(modelViewProjectionMatrix, 0, viewProjectionMatrix,
             0, modelMatrix, 0);
+    }
+
+    public void setGLSurfaceViewTouch(final GLSurfaceView glSurfaceView){
+        glSurfaceView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if(event!=null){
+                    final float normalizedX=event.getX()/(float) v.getWidth()*2-1;
+                    final float normalizedY=
+                            -(event.getY()/(float) v.getHeight()*2-1);
+
+                    if(event.getAction()==MotionEvent.ACTION_DOWN){
+                        glSurfaceView.queueEvent(new Runnable() {
+                            @Override
+                            public void run() {
+                                handleTouchPress(normalizedX,normalizedY);
+                            }
+                        });
+                    }else if(event.getAction()==MotionEvent.ACTION_MOVE){
+                        glSurfaceView.queueEvent(new Runnable() {
+                            @Override
+                            public void run() {
+                                handleTouchDrag(normalizedX,normalizedY);
+                            }
+                        });
+                    }
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 }

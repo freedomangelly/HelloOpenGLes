@@ -2,21 +2,18 @@ package com.liuy.helloopengles;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.ConfigurationInfo;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MotionEvent;
-import android.view.View;
-import android.widget.TextView;
 
-import com.liuy.airhockettouch.ColorRender3;
+import com.liuy.airhockettouch.AirHockeyRenderer;
 import com.liuy.particles.ParticlesRenderer;
-import com.liuy.particles.SkyBox;
-import com.liuy.particles.SkyRenderer;
+import com.liuy.particles.data.HeightmapRenderer;
+import com.liuy.particles.skybox.SkyRenderer;
+
 
 public class MainActivity extends AppCompatActivity {
     private String TAG = "testOpengles";
@@ -42,37 +39,9 @@ public class MainActivity extends AppCompatActivity {
         mGLSurfaceView =new GLSurfaceView(this);
         setContentView(mGLSurfaceView);
         mGLSurfaceView.setEGLContextClientVersion(2);//设置opengl的版本
-        final SkyRenderer renderer=new SkyRenderer(this);
+        final HeightmapRenderer renderer=new HeightmapRenderer(this);
         mGLSurfaceView.setRenderer(renderer);
         renderer.setGLSurfaceViewTouch(mGLSurfaceView);
-//        mGLSurfaceView.setOnTouchListener(new View.OnTouchListener() {
-//            @Override
-//            public boolean onTouch(View v, MotionEvent event) {
-//                if(event!=null){
-//                    final float normalizedX=event.getX()/(float) v.getWidth()*2-1;
-//                    final float normalizedY=
-//					-(event.getY()/(float) v.getHeight()*2-1);
-//
-//                    if(event.getAction()==MotionEvent.ACTION_DOWN){
-//                        mGLSurfaceView.queueEvent(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                renderer.handleTouchPress(normalizedX,normalizedY);
-//                            }
-//                        });
-//                    }else if(event.getAction()==MotionEvent.ACTION_MOVE){
-//                        mGLSurfaceView.queueEvent(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                renderer.handleTouchDrag(normalizedX,normalizedY);
-//                            }
-//                        });
-//                    }
-//                    return true;
-//                }
-//                return false;
-//            }
-//        });
     }
 
     //设备是否支持opengl es 2.0

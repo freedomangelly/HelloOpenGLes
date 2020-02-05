@@ -8,4 +8,5 @@ package com.liuy.airhockettouch.util;
  */
 public class Consts {
     public static final int BYTES_PER_FLOAT = 4;
+    public static final int BYTES_PER_SHORT = 2;
 }

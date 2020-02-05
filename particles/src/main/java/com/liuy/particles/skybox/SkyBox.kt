@@ -1,4 +1,4 @@
-package com.liuy.particles
+package com.liuy.particles.skybox
 
 import android.opengl.GLES20.*
 import com.liuy.airhockettouch.data.VertexArray
