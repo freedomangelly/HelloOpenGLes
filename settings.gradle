@@ -1,2 +1,2 @@
-include ':app'
+include ':app', ':airhockettouch', ':particles'
 rootProject.name='HelloOpenGLes'
