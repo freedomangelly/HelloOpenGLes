@@ -1,19 +1,11 @@
-package com.liuy.particles.data
+package com.liuy.particles.height
 
 import android.graphics.Bitmap
-import com.liuy.airhockettouch.util.Consts.BYTES_PER_FLOAT
-import android.R.attr.y
-import android.R.attr.x
 import android.graphics.Color
 import android.opengl.GLES20.*
 import android.util.Log
-import com.liuy.airhockettouch.util.Geometry
 import com.liuy.airhockettouch.util.Consts.BYTES_PER_FLOAT
-
-
-
-
-
+import com.liuy.airhockettouch.util.Geometry
 
 
 /**
@@ -59,7 +51,7 @@ class Heightmap {
         //为了有效的读位图，我们首先用getPixels索取像素，然后回收bitMap
         bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
         bitmap.recycle()
-
+        //
         val heightmapVertices = FloatArray(width * height * TOTAL_COMPONENT_COUNT)
 
         var offset = 0
@@ -80,13 +72,13 @@ class Heightmap {
         for (row in 0 until height) {
             for (col in 0 until width) {
 
-                var xPosition:Float=(col.toFloat()/(width-1).toFloat())-0.5f
-                var yPosition:Float=(Color.red(pixels[row *height +col])/255.toFloat()).toFloat()
-                var zPosition:Float=(row.toFloat()/(height-1).toFloat())-0.5f
-
-                heightmapVertices[offset++]=xPosition;
-                heightmapVertices[offset++]=yPosition;
-                heightmapVertices[offset++]=zPosition;
+//                var xPosition:Float=(col.toFloat()/(width-1).toFloat())-0.5f
+//                var yPosition:Float=(Color.red(pixels[row *height +col])/255.toFloat()).toFloat()
+//                var zPosition:Float=(row.toFloat()/(height-1).toFloat())-0.5f
+//
+//                heightmapVertices[offset++]=xPosition;
+//                heightmapVertices[offset++]=yPosition;
+//                heightmapVertices[offset++]=zPosition;
 
 
                 // The heightmap will lie flat on the XZ plane and centered
@@ -94,28 +86,53 @@ class Heightmap {
                 // bitmap height mapped to Z, and Y representing the height. We
                 // assume the heightmap is grayscale, and use the value of the
                 // red color to determine the height.
-//                val point = getPoint(pixels, row, col)
-//
-//                heightmapVertices[offset++] = point.x
-//                heightmapVertices[offset++] = point.y
-//                heightmapVertices[offset++] = point.z
-//
-//                val top = getPoint(pixels, row - 1, col)
-//                val left = getPoint(pixels, row, col - 1)
-//                val right = getPoint(pixels, row, col + 1)
-//                val bottom = getPoint(pixels, row + 1, col)
-//
-//                val rightToLeft = Geometry.vectorBetween(right, left)
-//                val topToBottom = Geometry.vectorBetween(top, bottom)
-//                val normal = rightToLeft.crossProduct(topToBottom).normalize()
-//
-//                heightmapVertices[offset++] = normal.x
-//                heightmapVertices[offset++] = normal.y
-//                heightmapVertices[offset++] = normal.z
+                val point = getPoint(pixels, row, col)!!
+
+                heightmapVertices[offset++] = point.x
+                heightmapVertices[offset++] = point.y
+                heightmapVertices[offset++] = point.z
+                //让我们再添加写代码，获取当前点的临界点，并为其生成表面法线
+                //为了生成这个法线，我们遵循了前面总结的算法：首先获取其临界点，然后，用这些点创建代表其平面的两个向量；最后，采用这两个向量的叉积，并把它归一化以得到其表面法线
+                val top = getPoint(pixels, row - 1, col)
+                val left = getPoint(pixels, row, col - 1)
+                val right = getPoint(pixels, row, col + 1)
+                val bottom = getPoint(pixels, row + 1, col)
+
+                val rightToLeft = Geometry.vectorBetween(right, left)
+                val topToBottom = Geometry.vectorBetween(top, bottom)
+                val normal = rightToLeft.crossProduct(topToBottom).normalize()
+
+                heightmapVertices[offset++] = normal.x
+                heightmapVertices[offset++] = normal.y
+                heightmapVertices[offset++] = normal.z
             }
         }
 
         return heightmapVertices
+    }
+
+    /**
+     * Returns a point at the expected position given by row and col, but if the
+     * position is out of bounds, then it clamps the position and uses the
+     * clamped position to read the height. For example, calling with row = -1
+     * and col = 5 will set the position as if the point really was at -1 and 5,
+     * but the height will be set to the heightmap height at (0, 5), since (-1,
+     * 5) is out of bounds. This is useful when we're generating normals, and we
+     * need to read the heights of neighbouring points.
+     */
+    private fun getPoint(pixels: IntArray, row: Int, col: Int): Geometry.Point? {
+        var row = row
+        var col = col
+        val x = col.toFloat() / (width - 1).toFloat() - 0.5f
+        val z = row.toFloat() / (height - 1).toFloat() - 0.5f
+        row = clamp(row, 0, width - 1)
+        col = clamp(col, 0, height - 1)
+        val y = Color.red(pixels[row * height + col]).toFloat() / 255.toFloat()
+        return Geometry.Point(x, y, z)
+    }
+
+    private fun clamp(`val`: Int, min: Int, max: Int): Int {
+        return Math.max(min, Math.min(max, `val`))
     }
 
     /**生成索引数据
@@ -177,19 +194,22 @@ class Heightmap {
                 heightmapProgram.getPositionAttributeLocation(),
                 POSITION_COMPONENT_COUNT, STRIDE)
 
+        //因为在同一个顶点缓冲区对象中，存储了位置有存储了法线数据，我么你现在不得不把跨距传递给调用glVertexAttribPointer()的辅助函数
+        //setVertexAttribPointer,以使OpenGL知道在每个元素之间需要跳过多少字节，第二个setVertexAttribPointer()调用也非常重要，
+        //因为我们也为法线制定了以字节为点位的其实偏移值；否则，OpenGL就会读入一部分位置和一部分法线，并把那个值当做法线，这看起来非常怪异
+        vertexBuffer!!.setVertexAttribPointer(
+                POSITION_COMPONENT_COUNT * BYTES_PER_FLOAT,
+                heightmapProgram.getNormalAttributeLocation(),
+                NORMAL_COMPONENT_COUNT, STRIDE)
     }
 
     /**
      * 告诉openggl使用索引缓冲区绘制数据。
      */
     fun draw() {
-        Log.i("info","draw========1 "+indexBuffer!!.bufferId);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer!!.bufferId)
-        Log.i("info","draw========numElements="+numElements);
-        Log.i("info","draw========2")
         glDrawElements(GL_TRIANGLES, numElements, GL_UNSIGNED_SHORT, 0)
-        Log.i("info","draw========3")
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
-        Log.i("info","draw========4")
     }
+
 }

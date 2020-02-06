@@ -1,6 +1,5 @@
-package com.liuy.particles.data
+package com.liuy.particles.height
 
-import android.opengl.GLES11
 import android.opengl.GLES20.*
 import com.liuy.airhockettouch.util.Consts
 import java.lang.RuntimeException

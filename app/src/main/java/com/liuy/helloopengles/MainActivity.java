@@ -9,10 +9,7 @@ import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.liuy.airhockettouch.AirHockeyRenderer;
-import com.liuy.particles.ParticlesRenderer;
-import com.liuy.particles.data.HeightmapRenderer;
-import com.liuy.particles.skybox.SkyRenderer;
+import com.liuy.particles.height.HeightmapRenderer;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -41,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
         mGLSurfaceView.setEGLContextClientVersion(2);//设置opengl的版本
         final HeightmapRenderer renderer=new HeightmapRenderer(this);
         mGLSurfaceView.setRenderer(renderer);
-        renderer.setGLSurfaceViewTouch(mGLSurfaceView);
+//        renderer.setGLSurfaceViewTouch(mGLSurfaceView);
     }
 
     //设备是否支持opengl es 2.0

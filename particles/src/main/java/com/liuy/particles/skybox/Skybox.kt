@@ -11,7 +11,7 @@ import java.nio.ByteBuffer
  * email: 674919909@qq.com
  * version: 1.0
  */
-class SkyBox {
+class Skybox {
     private val POSITION_COMPONENT_COUNT = 3
     private var vertexArray: VertexArray? = null
     private var indexArray: ByteBuffer? = null

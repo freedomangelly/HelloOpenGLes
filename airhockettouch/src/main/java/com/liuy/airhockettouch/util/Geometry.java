@@ -1,5 +1,7 @@
 package com.liuy.airhockettouch.util;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * description:
  * author: freed on 2020/1/31
@@ -70,7 +72,12 @@ public class Geometry {
 			y*f,
 			z*f);
         }
-    }
+
+       @NotNull
+       public Vector normalize() {
+           return scale(1f/length());
+       }
+   }
     /**
      * 面
      */

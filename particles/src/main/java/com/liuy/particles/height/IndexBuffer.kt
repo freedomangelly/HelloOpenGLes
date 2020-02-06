@@ -1,13 +1,9 @@
-package com.liuy.particles.data
+package com.liuy.particles.height
 
-import android.opengl.GLES20
 import android.opengl.GLES20.*
-import com.liuy.airhockettouch.util.Consts
 import java.lang.RuntimeException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.nio.FloatBuffer
-import java.nio.ShortBuffer
 import com.liuy.airhockettouch.util.Consts.BYTES_PER_SHORT
 
 

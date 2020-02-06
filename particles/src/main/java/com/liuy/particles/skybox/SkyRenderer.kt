@@ -46,7 +46,7 @@ class SkyRenderer : GLSurfaceView.Renderer {
 
     //天空盒子参数
     private var skyboxProgram: SkyboxShaderProgram? = null
-    private var skybox: SkyBox? = null
+    private var skybox: Skybox? = null
     private var skyboxTexture: Int = 0
     private var xRotation: Float = 0.toFloat()
     private var yRotation: Float = 0.toFloat()
@@ -90,7 +90,7 @@ class SkyRenderer : GLSurfaceView.Renderer {
         particleTexture = TextureHelper.loadTexture(context, R.drawable.particle_texture)
 
         skyboxProgram = SkyboxShaderProgram(context)
-        skybox = SkyBox()
+        skybox = Skybox()
         skyboxTexture = TextureHelper.loadCubeMap(context,
                 intArrayOf(R.drawable.left, R.drawable.right, R.drawable.bottom, R.drawable.top, R.drawable.front, R.drawable.back))
     }

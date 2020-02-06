@@ -1,27 +1,25 @@
-package com.liuy.particles.data
+package com.liuy.particles.height
 
 import android.content.Context
 import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
 import android.opengl.GLES20.*
 import android.opengl.GLSurfaceView
 import android.opengl.Matrix.*
+import android.view.MotionEvent
+import android.view.View
+import android.view.View.OnTouchListener
 import com.liuy.airhockettouch.util.Geometry
 import com.liuy.airhockettouch.util.MatrixHelper
 import com.liuy.airhockettouch.util.TextureHelper
-import javax.microedition.khronos.egl.EGLConfig
-import javax.microedition.khronos.opengles.GL10
-import android.opengl.Matrix.multiplyMM
-import android.opengl.Matrix.setIdentityM
-import android.view.View
-import android.view.MotionEvent
-import android.view.View.OnTouchListener
 import com.liuy.particles.ParticleShaderProgram
 import com.liuy.particles.ParticleShooter
 import com.liuy.particles.ParticleSystem
-import com.liuy.particles.skybox.SkyBox
-import com.liuy.particles.skybox.SkyboxShaderProgram
-import android.graphics.drawable.BitmapDrawable
 import com.liuy.particles.R
+import com.liuy.particles.skybox.Skybox
+import com.liuy.particles.skybox.SkyboxShaderProgram
+import javax.microedition.khronos.egl.EGLConfig
+import javax.microedition.khronos.opengles.GL10
 
 
 /**
@@ -49,7 +47,7 @@ class HeightmapRenderer : GLSurfaceView.Renderer {
 
     //天空盒子参数
     private var skyboxProgram: SkyboxShaderProgram? = null
-    private var skybox: SkyBox? = null
+    private var skybox: Skybox? = null
     private var skyboxTexture: Int = 0
     private var xRotation: Float = 0.toFloat()
     private var yRotation: Float = 0.toFloat()
@@ -63,6 +61,34 @@ class HeightmapRenderer : GLSurfaceView.Renderer {
     private val modelViewProjectionMatrix = FloatArray(16)
     private var heightmapProgram: HeightmapShaderProgram? = null
     private var heightmap: Heightmap? = null
+
+    //光照
+    /**
+     * 这个向量大约指向天空盒的太阳。你可以用下面这些步骤得出一个相似的结果
+     * 1.创建一个指向（0,0，-1）的向量，也就是正上方。
+     * 2.按场景旋转方向的反向旋转者向量
+     * 3.加入日志，打印这个额向量当前的方向，然后调试直到太阳处于屏幕中心
+     */
+
+//    var vectorToLight:Geometry.Vector = Geometry.Vector(0.61f,0.64f,-0.47f).normalize()
+//    var vectorToLight:Geometry.Vector = Geometry.Vector(0.30f,0.35f,-0.89f).normalize()
+
+    //眼世界
+
+    private val modelViewMatrix = FloatArray(16)
+    private val it_modelViewMatrix = FloatArray(16)
+
+    //我们也要把每个点光源的位置和颜色存到他们各自的数组中，这些位置和颜色与我们为每个离子发生器设定的位置和颜色大致匹配。其主要的区别在于每个点光宇都被放在他的粒子放射器设定的位置和颜色大致匹配
+    //其主要的区别在于每个点光源都被放在他的粒子发射器上方一个单位处。因为地形是绿色的，绿色的光也稍微变暗些，这样他就不会压制住红光和蓝光
+    val vectorToLight = floatArrayOf(0.30f, 0.35f, -0.89f, 0f)
+
+    private val pointLightPositions = floatArrayOf(-1f, 1f, 0f, 1f,
+            0f, 1f, 0f, 1f,
+            1f, 1f, 0f, 1f)
+
+    private val pointLightColors = floatArrayOf(1.00f, 0.20f, 0.02f,
+            0.02f, 0.25f, 0.02f,
+            0.02f, 0.20f, 1.00f)
 
     constructor(context: Context) {
         this.context = context
@@ -105,9 +131,12 @@ class HeightmapRenderer : GLSurfaceView.Renderer {
         particleTexture = TextureHelper.loadTexture(context, R.drawable.particle_texture)
         //天空盒子
         skyboxProgram = SkyboxShaderProgram(context)
-        skybox = SkyBox()
-        skyboxTexture = TextureHelper.loadCubeMap(context,
-                intArrayOf(R.drawable.left, R.drawable.right, R.drawable.bottom, R.drawable.top, R.drawable.front, R.drawable.back))
+        skybox = Skybox()
+//        skyboxTexture = TextureHelper.loadCubeMap(context,
+//                intArrayOf(R.drawable.left, R.drawable.right, R.drawable.bottom, R.drawable.top, R.drawable.front, R.drawable.back))
+        skyboxTexture = TextureHelper.loadCubeMap(context, intArrayOf(R.drawable.night_left, R.drawable.night_right,
+                R.drawable.night_bottom, R.drawable.night_top,
+                R.drawable.night_front, R.drawable.night_back))
         //增加地形
         heightmapProgram = HeightmapShaderProgram(context)
         heightmap = Heightmap((context.resources
@@ -147,7 +176,21 @@ class HeightmapRenderer : GLSurfaceView.Renderer {
         scaleM(modelMatrix, 0, 100f, 10f, 100f)
         updateMvpMatrix()
         heightmapProgram!!.useProgram()
-        heightmapProgram!!.setUniforms(modelViewProjectionMatrix)
+        //眼世界
+        // Put the light positions into eye space.
+        // 我们需要把方向光的向量和点光源的位置放入眼空间中，为此，我么使用Android的Matrix类吧他么乘以试图矩阵。那些位置已经在世界空间中了，因此，不必实现把他们与模型矩阵相乘
+        val vectorToLightInEyeSpace = FloatArray(4)
+        val pointPositionsInEyeSpace = FloatArray(12)
+        multiplyMV(vectorToLightInEyeSpace, 0, viewMatrix, 0, vectorToLight, 0)
+        multiplyMV(pointPositionsInEyeSpace, 0, viewMatrix, 0, pointLightPositions, 0)
+        multiplyMV(pointPositionsInEyeSpace, 4, viewMatrix, 0, pointLightPositions, 4)
+        multiplyMV(pointPositionsInEyeSpace, 8, viewMatrix, 0, pointLightPositions, 8)
+
+        heightmapProgram!!.setUniforms(modelViewMatrix, it_modelViewMatrix,
+                modelViewProjectionMatrix, vectorToLightInEyeSpace,
+                pointPositionsInEyeSpace, pointLightColors)
+        //~眼世界
+//        heightmapProgram!!.setUniforms(modelViewProjectionMatrix,vectorToLight)
         heightmap!!.bindData(heightmapProgram!!)
         heightmap!!.draw()
     }
@@ -244,6 +287,10 @@ class HeightmapRenderer : GLSurfaceView.Renderer {
      */
     private fun updateMvpMatrix() {
         multiplyMM(tempMatrix, 0, viewMatrix, 0, modelMatrix, 0)
+        //把modelViewMatrix设置为合并后的模型视图矩阵，
+        invertM(tempMatrix, 0, modelViewMatrix, 0);
+        //把it_modelViewMatrix设置为那个反转矩阵的倒置
+        transposeM(it_modelViewMatrix, 0, tempMatrix, 0);
         multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, tempMatrix, 0)
     }
 
